@@ -34,6 +34,7 @@ export function Screen({
           contentContainerStyle={styles.scrollContent}
           contentInsetAdjustmentBehavior="automatic"
           automaticallyAdjustKeyboardInsets
+          keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View style={styles.inner}>

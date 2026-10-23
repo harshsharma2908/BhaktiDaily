@@ -92,6 +92,14 @@ export async function requestReminderPermission(): Promise<ReminderPermission> {
 
 async function scheduleInternal(hour: number, minute: number): Promise<ReminderScheduleResult> {
   try {
+    // A fixed identifier plus a cancel-first policy keeps exactly one intended
+    // reminder in the system queue. Cancel before checking permission too, so a
+    // revoked permission cannot leave an old reminder scheduled at a stale
+    // time. A missing identifier is not an error.
+    await Notifications.cancelScheduledNotificationAsync(ReminderNotificationId).catch(
+      () => undefined
+    );
+
     const permission = await getReminderPermission();
     if (permission !== 'granted') {
       return { ok: false, reason: permission };
@@ -99,11 +107,6 @@ async function scheduleInternal(hour: number, minute: number): Promise<ReminderS
 
     await ensureChannel();
 
-    // A fixed identifier plus a cancel-first policy keeps exactly one intended
-    // reminder in the system queue. A missing identifier is not an error.
-    await Notifications.cancelScheduledNotificationAsync(ReminderNotificationId).catch(
-      () => undefined
-    );
     await Notifications.scheduleNotificationAsync({
       identifier: ReminderNotificationId,
       content: { ...reminderContent },

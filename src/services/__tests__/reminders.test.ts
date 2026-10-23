@@ -69,7 +69,7 @@ describe('local reminders', () => {
     );
   });
 
-  it('does not schedule when notification permission is missing', async () => {
+  it('cancels the old reminder and does not schedule when permission is missing', async () => {
     getPermissions.mockResolvedValue(
       permissionStatus({ granted: false, canAskAgain: false, status: PermissionStatus.DENIED })
     );
@@ -77,6 +77,7 @@ describe('local reminders', () => {
     const result = await scheduleDailyReminder(7, 30);
 
     expect(result).toEqual({ ok: false, reason: 'denied' });
+    expect(cancelScheduled).toHaveBeenCalledWith(ReminderNotificationId);
     expect(scheduleNotification).not.toHaveBeenCalled();
   });
 

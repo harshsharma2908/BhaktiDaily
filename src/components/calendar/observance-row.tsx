@@ -58,7 +58,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
     paddingVertical: Spacing.md,
   },
   dateBadge: {
