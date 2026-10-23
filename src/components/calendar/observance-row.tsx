@@ -1,20 +1,23 @@
-import type { SampleObservance } from '@/data/calendar';
 import { StyleSheet, View } from 'react-native';
 
+import { ReviewStatusPill } from '@/components/content/review-status-pill';
 import { ThemedText } from '@/components/themed-text';
 import { Pill } from '@/components/ui/pill';
 import { Radius, Spacing } from '@/constants/theme';
+import { getSourceLine } from '@/content/presentation';
+import type { CalendarObservance } from '@/content/types';
 import { useTheme } from '@/hooks/use-theme';
 import { formatHindiMonthShort, parseDateKey } from '@/lib/date';
 
 type ObservanceRowProps = {
-  observance: SampleObservance;
+  observance: CalendarObservance;
   showDivider?: boolean;
 };
 
 export function ObservanceRow({ observance, showDivider = true }: ObservanceRowProps) {
   const theme = useTheme();
   const date = parseDateKey(observance.date);
+  const sourceLine = getSourceLine(observance.sourceIds);
 
   return (
     <View
@@ -34,12 +37,17 @@ export function ObservanceRow({ observance, showDivider = true }: ObservanceRowP
       <View style={styles.copy}>
         <View style={styles.pills}>
           <Pill label={observance.category} tone="muted" />
-          <Pill label="नमूना" tone="outline" />
+          <ReviewStatusPill status={observance.reviewStatus} />
         </View>
         <ThemedText type="bodyStrong">{observance.title}</ThemedText>
         <ThemedText type="caption" themeColor="textSecondary" numberOfLines={2}>
           {observance.description}
         </ThemedText>
+        {sourceLine ? (
+          <ThemedText type="caption" themeColor="textSecondary" numberOfLines={2}>
+            {sourceLine}
+          </ThemedText>
+        ) : null}
       </View>
     </View>
   );

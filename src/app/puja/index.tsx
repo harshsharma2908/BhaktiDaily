@@ -15,6 +15,8 @@ import {
   type PujaCategoryFilter,
 } from '@/data/puja-guides';
 
+const hasUnreviewedGuides = PujaGuides.some((guide) => guide.reviewStatus !== 'reviewed');
+
 export default function PujaScreen() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<PujaCategoryFilter>('सभी');
@@ -69,11 +71,19 @@ export default function PujaScreen() {
         ))}
       </ScrollView>
 
-      <Notice
-        tone="sample"
-        title="सभी मार्गदर्शिकाएँ नमूना हैं"
-        description="ये पृष्ठ केवल UI संरचना दिखाते हैं। सामग्री, चरण और स्रोत समीक्षा के बाद ही वास्तविक मार्गदर्शन बनेंगे।"
-      />
+      {hasUnreviewedGuides ? (
+        <Notice
+          tone="sample"
+          title="नमूना और समीक्षा-लंबित मार्गदर्शिकाएँ"
+          description="जिन पृष्ठों पर 'नमूना' या 'समीक्षा बाकी' लिखा है, वे केवल UI संरचना दिखाते हैं। सामग्री, चरण और स्रोत समीक्षा के बाद ही वास्तविक मार्गदर्शन बनेंगे।"
+        />
+      ) : (
+        <Notice
+          tone="success"
+          title="समीक्षित मार्गदर्शिकाएँ"
+          description="सभी सूचीबद्ध मार्गदर्शिकाओं के साथ स्रोत और समीक्षा विवरण दर्ज है।"
+        />
+      )}
 
       <View style={styles.section}>
         <SectionHeader title="मार्गदर्शिकाएँ" hint={`${filteredGuides.length} परिणाम`} />
@@ -88,7 +98,7 @@ export default function PujaScreen() {
           <EmptyState
             icon={{ ios: 'magnifyingglass', android: 'search_off', web: 'search_off' }}
             title="कोई मार्गदर्शिका नहीं मिली"
-            description="दूसरा शब्द आज़माएँ या श्रेणी बदलें। अभी केवल नमूना मार्गदर्शिकाएँ उपलब्ध हैं।"
+            description="दूसरा शब्द आज़माएँ या श्रेणी बदलें।"
             actionLabel={hasFilters ? 'फ़िल्टर हटाएँ' : undefined}
             onAction={hasFilters ? resetFilters : undefined}
           />

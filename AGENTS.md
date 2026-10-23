@@ -12,9 +12,10 @@ cross-platform compatibility.
 - The design system lives in `src/constants/theme.ts` and `src/constants/typography.ts`.
 - Day 1 built the navigation and design foundation; Day 2 added the full UI for all five
   destinations using labelled sample data; Day 3 added local japa persistence, saved appearance,
-  optional local reminders and focused tests.
-- Do not add verified religious content without the product owner's approval. Sample content must
-  stay labelled and must never be promoted to "verified" without a named, reviewed source.
+  optional local reminders and focused tests; Day 4 added shared content/provenance types, a source
+  register, structural validation and an editorial checklist.
+- Do not add reviewed religious content without the product owner's approval. Sample content must
+  stay labelled and must never be promoted to "reviewed" without a named, reviewed source.
 
 ## Expo has changed — do not trust your training data
 
@@ -92,12 +93,22 @@ passed unless it actually ran in this environment.
 
 These are product requirements, not suggestions:
 
-- **Never invent** festival dates, tithi, muhurat timings, mantra text, religious quotations or
-  puja instructions.
+- **Never invent** festival dates, tithi, muhurat timings, mantra text, religious quotations,
+  source titles, source URLs or puja instructions.
 - Only add religious content that has a named, reviewed source.
 - Keep the source attached to the content in both the data model and the UI.
+- Use the shared models in `src/content/types.ts`; do not create a parallel content shape in a
+  screen.
+- Keep sources in `src/content/sources.ts`, separate from user-facing content. The register is
+  intentionally empty until a real source is supplied.
+- Use `reviewStatus: 'sample' | 'pending-review' | 'reviewed'`. A reviewed entry must name its
+  source, reviewer and review date; sample/pending entries must not claim review metadata.
+- Run `src/content/validation.ts` through the tests after changing content. It checks structure and
+  provenance only; it does not verify religious facts.
+- Follow `docs/content-source-register.md` and `docs/content-editorial-checklist.md` before changing
+  any status to `reviewed`.
 - Do not hard-code content into screen components; future content belongs in a typed data layer.
-- If verified content is not available, show an honest empty/coming-soon state.
+- If reviewed content is not available, show an honest sample/pending/coming-soon state.
 - Do not add a backend, login, subscriptions, ads or AI APIs during the MVP sprint.
 
 ## Local data & reminders
@@ -121,9 +132,11 @@ These are product requirements, not suggestions:
 
 - `jest-expo` and Jest are configured. Tests live in `src/**/__tests__/*.test.ts` and run with
   `npm test`.
-- Keep tests focused on pure logic, stored-value validation, storage failure handling and the
-  notification service contract. Add component-testing libraries only when a real component test
-  needs them.
+- Keep tests focused on pure logic, stored-value validation, content/provenance validation, storage
+  failure handling and the notification service contract. Add component-testing libraries only when
+  a real component test needs them.
+- The content validation test must validate the shipped library and keep every current entry
+  unreviewed until a real source and reviewer are supplied.
 - Always run `npm run check` (typecheck, lint, tests) and `npx expo-doctor` after changes.
 - Do not claim native notification delivery, a device launch, or manual accessibility QA passed
   unless it actually ran in this environment.
@@ -151,10 +164,12 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Current milestone
 
-Day 3 is complete: japa count/target persistence, saved appearance, optional local reminders,
-honest web/unsupported states, storage validation and focused tests are in place. `npm run check`,
-Expo Doctor (20/20), the Android export and the server-rendered web export pass. Native notification
-delivery and device accessibility still need real-device QA.
+Day 4 is complete: shared content/provenance models, an intentionally empty source register,
+structural validation, a source register document and an editorial checklist are in place. All
+current content remains `sample` or `pending-review`; no festival date, tithi, muhurat, mantra,
+quotation or ritual instruction has been added.
 
-Do not start Day 4 (verified calendar content, real puja content or other religious content) without
-approval. The roadmap lives in `README.md`.
+Do not change content to `reviewed` until the product owner supplies a named source and reviewer,
+the supported location(s) and the applicable panchang/calendar tradition, and the editorial
+checklist is complete. Do not start monetization, ads, analytics or additional product features
+without approval. The roadmap lives in `README.md`.

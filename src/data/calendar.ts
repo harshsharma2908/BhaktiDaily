@@ -1,21 +1,11 @@
+import type { CalendarObservance, ObservanceCategory } from '@/content/types';
 import { parseDateKey } from '@/lib/date';
-
-export type ObservanceCategory = 'पर्व' | 'व्रत' | 'स्मरण';
 
 /**
  * These are deliberately neutral UI samples. They are not festival names,
- * tithi, muhurat timings or verified panchang dates.
+ * tithi, muhurat timings or verified panchang dates. They carry no source
+ * because there is no real observance to attribute.
  */
-export type SampleObservance = {
-  id: string;
-  date: string;
-  title: string;
-  category: ObservanceCategory;
-  description: string;
-  status: 'sample';
-  sourceStatus: 'pending';
-};
-
 const sampleDays = [5, 12, 21, 27] as const;
 
 const sampleTemplates: { title: string; category: ObservanceCategory }[] = [
@@ -25,25 +15,41 @@ const sampleTemplates: { title: string; category: ObservanceCategory }[] = [
   { title: 'नमूना अवसर — स्रोत लंबित', category: 'पर्व' },
 ];
 
-export function getSampleObservancesForMonth(year: number, month: number): SampleObservance[] {
+const sampleProvenance = {
+  language: 'hi',
+  reviewStatus: 'sample',
+  sourceIds: [],
+} as const;
+
+function toSampleDateKey(year: number, month: number, day: number) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+export function getSampleObservancesForMonth(
+  year: number,
+  month: number
+): CalendarObservance[] {
   return sampleDays.map((day, index) => {
     const template = sampleTemplates[index];
+    const date = toSampleDateKey(year, month, day);
 
     return {
-      id: `${year}-${String(month + 1).padStart(2, '0')}-${day}`,
-      date: `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      id: `sample-${date}`,
+      date,
       title: template.title,
       category: template.category,
       description:
         'यह केवल UI परीक्षण के लिए बनाई गई नमूना प्रविष्टि है — किसी वास्तविक पर्व या व्रत की तिथि नहीं।',
-      status: 'sample',
-      sourceStatus: 'pending',
+      ...sampleProvenance,
     };
   });
 }
 
 /** The nearest sample rows, used by the Home and Calendar upcoming lists. */
-export function getUpcomingSampleObservances(from = new Date(), count = 3): SampleObservance[] {
+export function getUpcomingSampleObservances(
+  from = new Date(),
+  count = 3
+): CalendarObservance[] {
   const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
 
   const rows = [0, 1, 2].flatMap((offset) => {

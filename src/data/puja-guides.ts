@@ -1,26 +1,4 @@
-export type PujaCategory = 'दैनिक' | 'पर्व' | 'विशेष';
-
-export type PujaGuideIcon = 'morning' | 'evening' | 'festival' | 'silence';
-
-export type PujaGuideStep = {
-  title: string;
-  description: string;
-};
-
-export type PujaGuide = {
-  id: string;
-  title: string;
-  description: string;
-  category: PujaCategory;
-  duration: string;
-  icon: PujaGuideIcon;
-  materials: string[];
-  steps: PujaGuideStep[];
-  notes: string[];
-  status: 'sample';
-  sourceStatus: 'pending';
-  sourceNote: string;
-};
+import type { PujaGuide, PujaGuideStep } from '@/content/types';
 
 export const PujaCategories = ['सभी', 'दैनिक', 'पर्व', 'विशेष'] as const;
 
@@ -57,6 +35,12 @@ const notes = [
   'वास्तविक सामग्री समीक्षा, स्रोत और समीक्षक के नाम के साथ ही प्रकाशित होगी।',
 ];
 
+const sampleProvenance = {
+  language: 'hi',
+  reviewStatus: 'sample',
+  sourceIds: [],
+} as const;
+
 function buildGuide(
   seed: Pick<PujaGuide, 'id' | 'title' | 'description' | 'category' | 'duration' | 'icon'>
 ): PujaGuide {
@@ -65,9 +49,7 @@ function buildGuide(
     materials,
     steps,
     notes,
-    status: 'sample',
-    sourceStatus: 'pending',
-    sourceNote: 'स्रोत और समीक्षक का विवरण सामग्री प्रकाशन के साथ जोड़ा जाएगा।',
+    ...sampleProvenance,
   };
 }
 

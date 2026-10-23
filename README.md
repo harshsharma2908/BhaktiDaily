@@ -3,10 +3,11 @@
 An Android-first, Hindi-first Hindu devotional companion. The app is being built as a calm,
 trustworthy daily space for devotional content, festival dates, puja guidance and japa.
 
-> **Current status — Day 3 local persistence milestone:** all five destinations have their final
+> **Current status — Day 4 content architecture milestone:** all five destinations have their final
 > navigation and layout, backed by clearly labelled sample data. Japa progress, appearance and
-> optional daily reminders are now saved locally. Verified religious content, calendar dates,
-> mantra text and puja instructions are **not** implemented yet.
+> optional daily reminders are saved locally. The app now has shared content/provenance types, a
+> machine-readable source register, structural validation and an editorial checklist. No reviewed
+> religious content, real calendar dates, mantra text or puja instructions have been added yet.
 
 ## Current scope
 
@@ -18,8 +19,9 @@ trustworthy daily space for devotional content, festival dates, puja guidance an
 | जाप / Jaap | Circular counter with target selection (27/54/108), progress, increment and confirmed reset. Count and target are saved locally and restored on launch |
 | सेटिंग्स / Settings | Working appearance preference and optional daily local reminder, plus About, Contact and Privacy screens. Language remains Hindi-only and visibly unavailable |
 
-Every religious-looking entry is labelled **नमूना** (sample) and marked as source pending. The app
-does not claim any festival date, tithi, muhurat, mantra or puja instruction is real.
+Every religious-looking entry is labelled **नमूना** (sample) or **समीक्षा बाकी** (awaiting review)
+from its own review status. The source register is empty, and the app does not claim any festival
+date, tithi, muhurat, mantra or puja instruction is real.
 
 Not included on purpose: backend, login, subscriptions, advertisements, AI APIs, remote push,
 real festival dates, mantra text, religious quotations or muhurat timings.
@@ -34,7 +36,8 @@ real festival dates, mantra text, religious quotations or muhurat timings.
 - **expo-symbols** for platform-native SF Symbols / Material Symbols
 - **@react-native-async-storage/async-storage** for local, on-device state
 - **expo-notifications** for an optional daily local reminder on Android/iOS
-- **jest-expo** and **Jest** for focused logic, storage and notification-service tests
+- **jest-expo** and **Jest** for focused logic, storage, content-validation and
+  notification-service tests
 - No custom native modules were added
 
 ## Requirements
@@ -101,9 +104,11 @@ src/
     themed-view.tsx       Theme-aware view primitive
     calendar/
       month-grid.tsx      Month grid with selected/today/sample states
-      observance-row.tsx  Observance list row
+      observance-row.tsx  Observance list row with review status and source line
+    content/
+      review-status-pill.tsx  Data-driven sample/pending/reviewed label
     puja/
-      guide-card.tsx      Typed guide card
+      guide-card.tsx      Typed guide card with review status and source line
     settings/
       reminder-settings.tsx  Reminder switch, time stepper, permission guidance
     ui/
@@ -124,8 +129,14 @@ src/
     app.ts                App identity and content policy copy
     theme.ts              Colour, spacing, radius and layout tokens
     typography.ts         Devanagari-aware type scale
+  content/
+    types.ts              Shared content, provenance, source and review types
+    sources.ts            Machine-readable source register (empty pending review)
+    validation.ts         Structural/provenance validation, not fact verification
+    library.ts            Shipped content assembled for validation tests
+    presentation.ts       Review labels and source/provenance summaries
   data/
-    home.ts               Home sample thought and pending prayer
+    home.ts               Home sample reflection and pending prayer
     calendar.ts           Neutral sample observances
     puja-guides.ts        Typed sample guides and categories
     jaap.ts               Targets and mantra placeholder
@@ -152,6 +163,9 @@ src/
     jaap.ts               Japa schema, restore and save
     preferences.ts        Preferences schema, restore and save
   global.css              Web font stack
+docs/
+  content-source-register.md    Source mapping and reproduction-rights register
+  content-editorial-checklist.md  Human review and publication checklist
 assets/                   App icons, splash artwork and template imagery
 ```
 
@@ -237,15 +251,37 @@ This is a devotional app, so trust matters more than speed.
 - Keep the source visible with the content in the data model and UI.
 - `ContentPolicy.verifiedOnly` in `src/constants/app.ts` records this rule in copy.
 - Screens do not hard-code religious content; it lives in the typed `src/data/` layer with
-  `नमूना` badges and source-pending fields.
+  provenance fields and data-driven review labels.
 - Local persistence of a count does not make any religious content verified.
+
+#### Content model and provenance
+
+- `src/content/types.ts` defines one shared model for reflections, pending content, calendar
+  observances, puja guides, sources and review status.
+- Every entry has a stable ID, language, `reviewStatus`, `sourceIds`, and optional reviewer,
+  review date, scope and variation note. A reviewed entry must name its source, reviewer and review
+  date; sample and pending entries must not claim review metadata.
+- `src/content/sources.ts` is the machine-readable source register. It is deliberately empty until a
+  real source is supplied and checked. It records source kind (primary/official/secondary),
+  publisher, URL, dates, location/tradition scope and reproduction rights.
+- `src/content/validation.ts` checks duplicate IDs, required copy, source references, URL shape,
+  date keys, review metadata, unresolved rights and empty guide steps. Content currently uses
+  date-only fields; time-of-day fields are deliberately absent until muhurat content is approved.
+  Validation does **not** verify religious facts.
+- `src/content/__tests__/validation.test.ts` validates the shipped library as well as failure cases.
+  A clean run means the structure is coherent, not that a date or ritual is correct.
+- `docs/content-source-register.md` maps sources to content and records conflicts and reproduction
+  rights. `docs/content-editorial-checklist.md` is the human review gate before changing status to
+  `reviewed`.
+- Calendar samples are generated neutral UI rows. They are not festival names, panchang dates,
+  tithi, muhurat or local sunrise calculations.
 
 ## Testing
 
 `jest-expo` and Jest are configured in `package.json`; tests live in `src/**/__tests__/` and run with
 `npm test`. `npm run check` now runs strict typechecking, lint and the test suite.
 
-The current 6 suites / 39 tests cover:
+The current 7 suites / 55 tests cover:
 
 - japa increment, reset, target changes, progress clamping and completion
 - merging taps or a reset that happen while saved japa state is still loading
@@ -254,6 +290,10 @@ The current 6 suites / 39 tests cover:
 - successful AsyncStorage round-trips plus read, parse and write failure handling
 - reminder time formatting and five-minute stepping across midnight
 - permission denial, single identified scheduling, cancellation and native failures
+- content duplicate IDs, missing required copy, invalid source URLs, unknown source references,
+  invalid dates, unresolved reproduction rights and empty guide steps
+- validation of the shipped sample library, which must remain entirely unreviewed until approved
+- an explicit fixture showing that structural validation does not verify religious accuracy
 
 Checks run for this milestone:
 
@@ -264,19 +304,24 @@ npx expo export --platform android
 npx expo export --platform web
 ```
 
-All four commands pass. Expo Doctor reports 20/20 checks. Manual web QA covered all nine routes at
-320×720 and 360×780 in light and dark mode with no horizontal overflow. The browser run also verified
-that three counter taps, a target change to 27, a confirmed reset and a dark appearance preference
-all survive a full page reload, and that the web reminder control is visibly disabled as unsupported.
+All four commands pass. Expo Doctor reports 20/20 checks. Day 4 web QA covered all nine routes at
+320×720 in light mode and 360×780 in dark mode with no horizontal overflow. A separate browser check
+confirmed that a missing guide renders the honest empty state, and that Home, Calendar and Puja show
+their sample or pending-review labels. Earlier Day 3 browser QA verified that three counter taps, a
+target change to 27, a confirmed reset and a dark appearance preference all survive a full page
+reload, and that the web reminder control is visibly disabled as unsupported.
 
 Native notification delivery, Android/iOS tab-bar behaviour and TalkBack/VoiceOver were **not**
 verified on a physical device in this environment.
 
 ## Next milestones
 
-1. **Verified calendar foundation** — typed festival/vrat model, source registry, review checklist,
-   date list and empty states.
-2. **Puja guide content** — reviewed materials, preparation, ordered steps and sources.
+1. **Reviewed content intake** — the product owner supplies named sources, a reviewer, the first
+   supported location(s) and the applicable panchang/calendar tradition. Fill the source register,
+   map sources to entries, complete the editorial checklist and only then change `reviewStatus` to
+   `reviewed`.
+2. **Puja guide content** — reviewed materials, preparation, ordered steps, lineage/tradition scope
+   and source attribution.
 3. **Device QA** — local reminder delivery, Android/iOS notification permission flows, tab bars,
    safe areas, system back, ripples and screen-reader labels.
 4. **Localization** — complete a reviewed English translation before enabling the language choice.
@@ -287,8 +332,12 @@ verified on a physical device in this environment.
 
 - The launcher icon and iOS Icon Composer asset are still the Expo template artwork. A branded icon
   set is needed before a release build.
-- Calendar entries, guides and the home thought are labelled samples; no verified religious content
-  has been added.
+- Calendar entries, guides and the home thought are labelled samples; the home prayer is a pending
+  slot. No reviewed religious content has been added.
+- The source register is intentionally empty. No source title, URL, publisher, date, reviewer or
+  reproduction permission has been invented.
+- Structural validation checks provenance and data shape only. It cannot confirm that a festival
+  date, tithi, muhurat, mantra, quotation or ritual sequence is factually correct.
 - Language selection is intentionally unavailable; the app is Hindi-only for now.
 - Local reminders are Android/iOS only. Web shows an unsupported state.
 - Reminder timing is approximate. The app does not request exact-alarm permission and does not

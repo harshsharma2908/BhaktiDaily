@@ -5,7 +5,7 @@ export const AppInfo = {
 } as const;
 
 /**
- * Day 1 intentionally ships structure and copy only.
+ * Content policy shared across screens.
  * Religious dates, mantra text, quotations and muhurat timings must come from
  * reviewed, attributable sources before they are added to the app.
  */

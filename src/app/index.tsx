@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ObservanceRow } from '@/components/calendar/observance-row';
+import { ReviewStatusPill } from '@/components/content/review-status-pill';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,8 +14,10 @@ import { QuickAction } from '@/components/ui/quick-action';
 import { Screen, SectionHeader } from '@/components/ui/screen';
 import { AppInfo, ContentPolicy } from '@/constants/app';
 import { IconSize, Spacing } from '@/constants/theme';
+import { describeContentProvenance } from '@/content/presentation';
+import type { CalendarObservance } from '@/content/types';
+import { getUpcomingSampleObservances } from '@/data/calendar';
 import { HomeContent } from '@/data/home';
-import { getUpcomingSampleObservances, type SampleObservance } from '@/data/calendar';
 import { useTheme } from '@/hooks/use-theme';
 import { formatHindiDate, getHindiGreeting } from '@/lib/date';
 
@@ -45,10 +48,10 @@ export default function HomeScreen() {
       <Card tone="accent" style={styles.thoughtCard}>
         <View style={styles.cardHeader}>
           <Pill label="आज का चिंतन" />
-          <Pill label="नमूना" tone="outline" />
+          <ReviewStatusPill status={HomeContent.thought.reviewStatus} />
         </View>
 
-        <ThemedText type="lead">{HomeContent.thought.text}</ThemedText>
+        <ThemedText type="lead">{HomeContent.thought.body}</ThemedText>
 
         <View style={styles.sourceRow}>
           <SymbolView
@@ -60,12 +63,18 @@ export default function HomeScreen() {
             {HomeContent.thought.attribution}
           </ThemedText>
         </View>
+
+        {HomeContent.thought.reviewStatus === 'reviewed' ? (
+          <ThemedText type="caption" themeColor="textSecondary">
+            {describeContentProvenance(HomeContent.thought)}
+          </ThemedText>
+        ) : null}
       </Card>
 
       <Card style={styles.prayerCard}>
         <View style={styles.cardHeader}>
           <Pill label="प्रार्थना" tone="muted" />
-          <Pill label="समीक्षा बाकी" tone="outline" />
+          <ReviewStatusPill status={HomeContent.prayer.reviewStatus} />
         </View>
 
         <ThemedText type="heading">{HomeContent.prayer.title}</ThemedText>
@@ -136,7 +145,7 @@ export default function HomeScreen() {
   );
 }
 
-function renderUpcomingContent(observance: SampleObservance | undefined) {
+function renderUpcomingContent(observance: CalendarObservance | undefined) {
   if (!observance) {
     return (
       <View style={styles.emptyUpcoming}>

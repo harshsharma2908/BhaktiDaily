@@ -2,9 +2,11 @@ import { Link, type Href } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ReviewStatusPill } from '@/components/content/review-status-pill';
 import { ThemedText } from '@/components/themed-text';
 import { Pill } from '@/components/ui/pill';
-import type { PujaGuide, PujaGuideIcon } from '@/data/puja-guides';
+import { getReviewStatusLabel, getSourceLine } from '@/content/presentation';
+import type { PujaGuide, PujaGuideIcon } from '@/content/types';
 import { IconSize, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -22,12 +24,13 @@ type GuideCardProps = {
 export function GuideCard({ guide }: GuideCardProps) {
   const theme = useTheme();
   const href: Href = { pathname: '/puja/[id]', params: { id: guide.id } };
+  const sourceLine = getSourceLine(guide.sourceIds);
 
   return (
     <Link href={href} asChild>
       <Pressable
         accessibilityRole="link"
-        accessibilityLabel={`${guide.title}, ${guide.category}, नमूना मार्गदर्शिका`}
+        accessibilityLabel={`${guide.title}, ${guide.category}, ${getReviewStatusLabel(guide.reviewStatus)} मार्गदर्शिका`}
         android_ripple={{ color: theme.accentSoft }}
         style={styles.pressable}>
         {({ pressed }) => (
@@ -44,13 +47,18 @@ export function GuideCard({ guide }: GuideCardProps) {
             <View style={styles.copy}>
               <View style={styles.pills}>
                 <Pill label={guide.category} tone="muted" />
-                <Pill label="नमूना" tone="outline" />
+                <ReviewStatusPill status={guide.reviewStatus} />
               </View>
 
               <ThemedText type="bodyStrong">{guide.title}</ThemedText>
               <ThemedText type="caption" themeColor="textSecondary" numberOfLines={2}>
                 {guide.description}
               </ThemedText>
+              {sourceLine ? (
+                <ThemedText type="caption" themeColor="textSecondary" numberOfLines={2}>
+                  {sourceLine}
+                </ThemedText>
+              ) : null}
 
               <View style={styles.meta}>
                 <SymbolView

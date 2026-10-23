@@ -2,13 +2,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { StyleSheet, View } from 'react-native';
 
+import { ReviewStatusPill } from '@/components/content/review-status-pill';
 import { ThemedText } from '@/components/themed-text';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Notice } from '@/components/ui/notice';
-import { Pill } from '@/components/ui/pill';
 import { Screen, SectionHeader } from '@/components/ui/screen';
 import { IconSize, Radius, Spacing } from '@/constants/theme';
+import {
+  describeContentProvenance,
+  getReviewStatusLabel,
+} from '@/content/presentation';
 import { getPujaGuideById } from '@/data/puja-guides';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -47,16 +51,32 @@ export default function PujaGuideDetailScreen() {
 
   return (
     <Screen
-      eyebrow={`नमूना · ${guide.category}`}
+      eyebrow={`${getReviewStatusLabel(guide.reviewStatus)} · ${guide.category}`}
       title={guide.title}
       subtitle={guide.description}
       onBack={goBack}
       backLabel="मार्गदर्शिकाएँ">
-      <Notice
-        tone="sample"
-        title="यह पूजा विधि नहीं है"
-        description="नीचे दी गई सामग्री और चरण केवल पृष्ठ की संरचना दिखाने के लिए हैं। इन्हें निर्देश या सलाह न मानें।"
-      />
+      {guide.reviewStatus === 'reviewed' ? (
+        <Notice
+          tone="success"
+          title="समीक्षित मार्गदर्शिका"
+          description="स्रोत, समीक्षक और अंतिम समीक्षा तिथि नीचे दी गई है।"
+        />
+      ) : (
+        <Notice
+          tone="sample"
+          title={
+            guide.reviewStatus === 'pending-review'
+              ? 'मार्गदर्शिका समीक्षा के लिए लंबित'
+              : 'यह पूजा विधि नहीं है'
+          }
+          description={
+            guide.reviewStatus === 'pending-review'
+              ? 'यह प्रविष्टि अभी समीक्षा के लिए लंबित है; इसे निर्देश या सलाह न मानें।'
+              : 'नीचे दी गई सामग्री और चरण केवल पृष्ठ की संरचना दिखाने के लिए हैं। इन्हें निर्देश या सलाह न मानें।'
+          }
+        />
+      )}
 
       <Card tone="muted" style={styles.metaCard}>
         <View style={styles.metaItem}>
@@ -70,17 +90,20 @@ export default function PujaGuideDetailScreen() {
           <ThemedText type="caption" themeColor="textSecondary">
             स्रोत की स्थिति
           </ThemedText>
-          <Pill label="सत्यापन बाकी" tone="outline" />
+          <ReviewStatusPill status={guide.reviewStatus} />
         </View>
       </Card>
 
       <View style={styles.section}>
-        <SectionHeader title="सामग्री" hint="नमूना सूची" />
+        <SectionHeader
+          title="सामग्री"
+          hint={guide.reviewStatus === 'sample' ? 'नमूना सूची' : undefined}
+        />
 
         <Card>
           {guide.materials.map((material, index) => (
             <View
-              key={material}
+              key={`${guide.id}-material-${index}`}
               style={[
                 styles.materialRow,
                 index > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
@@ -99,11 +122,14 @@ export default function PujaGuideDetailScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="चरण" hint="नमूना क्रम" />
+        <SectionHeader
+          title="चरण"
+          hint={guide.reviewStatus === 'sample' ? 'नमूना क्रम' : undefined}
+        />
 
         <View style={styles.stepList}>
           {guide.steps.map((step, index) => (
-            <Card key={step.title} style={styles.stepCard}>
+            <Card key={`${guide.id}-step-${index}`} style={styles.stepCard}>
               <View style={[styles.stepNumber, { backgroundColor: theme.accentSoft }]}>
                 <ThemedText type="label" themeColor="accent">
                   {index + 1}
@@ -125,8 +151,8 @@ export default function PujaGuideDetailScreen() {
         <SectionHeader title="ध्यान दें" />
 
         <Card style={styles.noteCard}>
-          {guide.notes.map((note) => (
-            <View key={note} style={styles.noteRow}>
+          {guide.notes.map((note, index) => (
+            <View key={`${guide.id}-note-${index}`} style={styles.noteRow}>
               <SymbolView
                 name={{ ios: 'info.circle', android: 'info', web: 'info' }}
                 size={IconSize.sm}
@@ -140,10 +166,7 @@ export default function PujaGuideDetailScreen() {
         </Card>
       </View>
 
-      <Notice
-        title="स्रोत और समीक्षा"
-        description={`${guide.sourceNote} वास्तविक मार्गदर्शिका के साथ स्रोत, समीक्षक और प्रकाशन की तारीख भी दिखाई जाएगी।`}
-      />
+      <Notice title="स्रोत और समीक्षा" description={describeContentProvenance(guide)} />
     </Screen>
   );
 }
