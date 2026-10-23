@@ -14,37 +14,40 @@ import { Screen, SectionHeader } from '@/components/ui/screen';
 import { AppInfo } from '@/constants/app';
 import { IconSize, Radius, Spacing } from '@/constants/theme';
 import {
-  DefaultJaapTarget,
   JaapMantraPlaceholder,
   JaapTargets,
   type JaapTarget,
 } from '@/data/jaap';
+import { useJaap } from '@/hooks/use-jaap';
+import { getJaapProgress, isJaapComplete } from '@/lib/jaap-state';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function JaapScreen() {
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  const [count, setCount] = useState(0);
-  const [target, setTarget] = useState<JaapTarget>(DefaultJaapTarget);
+  const { state, increment: incrementCount, reset, selectTarget: selectSavedTarget, loadStatus, saveError } =
+    useJaap();
   const [showMantraNote, setShowMantraNote] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const progress = Math.min(count / target, 1);
-  const isComplete = count >= target;
+  const { count, target } = state;
+  const progress = getJaapProgress(state);
+  const isComplete = isJaapComplete(state);
   const circleSize = Math.min(260, Math.max(196, width - 128));
+  const storageUnavailable = loadStatus === 'error' || saveError;
 
   function increment() {
     setConfirmReset(false);
-    setCount((current) => current + 1);
+    incrementCount();
   }
 
   function resetCounter() {
-    setCount(0);
+    reset();
     setConfirmReset(false);
   }
 
   function selectTarget(nextTarget: JaapTarget) {
-    setTarget(nextTarget);
+    selectSavedTarget(nextTarget);
     setConfirmReset(false);
   }
 
@@ -52,11 +55,11 @@ export default function JaapScreen() {
     <Screen
       eyebrow={AppInfo.name}
       title="जाप"
-      subtitle="अपनी गति से स्मरण, बिना जल्दबाज़ी। काउंटर केवल इस सत्र के लिए है।">
+      subtitle="अपनी गति से स्मरण, बिना जल्दबाज़ी। आपकी गिनती इस डिवाइस पर सहेजी जाती है।">
       <Card style={styles.counterCard}>
         <View style={styles.cardHeader}>
           <Pill label="जाप काउंटर" />
-          <Pill label="अस्थायी" tone="muted" />
+          <Pill label="स्थानीय" tone="muted" />
         </View>
 
         <View
@@ -138,7 +141,7 @@ export default function JaapScreen() {
 
         {count === 0 ? (
           <ThemedText type="caption" themeColor="textSecondary" style={styles.centerText}>
-            शुरू करने के लिए ऊपर का बटन दबाएँ। यह काउंटर सहेजा नहीं जाएगा।
+            शुरू करने के लिए ऊपर का बटन दबाएँ। गिनती और लक्ष्य इस डिवाइस पर सहेजे जाएँगे।
           </ThemedText>
         ) : confirmReset ? (
           <View
@@ -148,7 +151,7 @@ export default function JaapScreen() {
             ]}>
             <ThemedText type="bodyStrong">काउंटर रीसेट करें?</ThemedText>
             <ThemedText type="caption" themeColor="textSecondary">
-              इस सत्र की गिनती 0 हो जाएगी। इसे वापस नहीं लाया जा सकेगा।
+              सहेजी गई गिनती 0 हो जाएगी। इसे वापस नहीं लाया जा सकेगा।
             </ThemedText>
             <View style={styles.confirmRow}>
               <Button
@@ -185,6 +188,14 @@ export default function JaapScreen() {
             description={`${target} जाप पूरे हो गए। आप स्मरण जारी रख सकते हैं या काउंटर रीसेट कर सकते हैं।`}
           />
         ) : null}
+
+        {storageUnavailable ? (
+          <Notice
+            title="प्रगति सहेजी नहीं जा सकी"
+            description="इस समय इस डिवाइस की स्थानीय स्टोरेज उपलब्ध नहीं है। गिनती अभी चलेगी, लेकिन ऐप बंद होने पर वह नहीं रहेगी।"
+            style={styles.storageNotice}
+          />
+        ) : null}
       </Card>
 
       <View style={styles.section}>
@@ -217,20 +228,20 @@ export default function JaapScreen() {
           <InfoRow
             icon={{ ios: 'target', android: 'track_changes', web: 'track_changes' }}
             title="लक्ष्य बदलें"
-            description="27, 54 या 108 जाप में से चुनें"
+            description="27, 54 या 108 में से चुनें। लक्ष्य बदलने पर गिनती नहीं बदलती।"
           />
           <InfoRow
             icon={{ ios: 'clock.arrow.circlepath', android: 'history', web: 'history' }}
-            title="सत्र समाप्त होते ही हट जाता है"
-            description="प्रगति सहेजना और लक्ष्य याद रखना अगले चरण में जोड़े जाएँगे"
+            title="रीसेट करने पर"
+            description="केवल गिनती शून्य होती है; चुना हुआ लक्ष्य बना रहता है।"
             last
           />
         </Card>
       </View>
 
       <Notice
-        title="यह केवल एक अस्थायी काउंटर है"
-        description="ऐप बंद होने पर गिनती नहीं रहेगी। स्थायी प्रगति, मंत्र चयन और सहेजे गए लक्ष्य अगले चरण में जोड़े जाएँगे।"
+        title="गिनती और लक्ष्य सहेजे जाते हैं"
+        description="यह एक स्थानीय, जारी रहने वाला काउंटर है — कोई दैनिक स्ट्रीक या खाता नहीं। ऐप बंद करने पर भी गिनती वहीं से शुरू होगी जहाँ आपने छोड़ी थी।"
       />
 
       <SymbolView
@@ -313,6 +324,9 @@ const styles = StyleSheet.create({
   },
   mantraNotice: {
     marginTop: Spacing.md,
+  },
+  storageNotice: {
+    marginTop: Spacing.xs,
   },
   footerIcon: {
     alignSelf: 'center',

@@ -1,15 +1,13 @@
 import { NativeTabs } from 'expo-router/native-tabs';
-import { useColorScheme } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * Android/iOS use the system tab bar for native feel, accessibility and
  * predictable safe-area handling. The web version lives in app-tabs.web.tsx.
  */
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  const colors = useTheme();
 
   return (
     <NativeTabs

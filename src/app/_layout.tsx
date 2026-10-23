@@ -5,14 +5,24 @@ import { useEffect } from 'react';
 
 import AppTabs from '@/components/app-tabs';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useResolvedColorScheme } from '@/hooks/use-resolved-color-scheme';
+import { PreferencesProvider, usePreferences } from '@/providers/preferences-provider';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // The splash screen may already be hidden during fast refresh.
 });
 
 export default function RootLayout() {
-  const scheme = useColorScheme();
+  return (
+    <PreferencesProvider>
+      <RootNavigation />
+    </PreferencesProvider>
+  );
+}
+
+function RootNavigation() {
+  const scheme = useResolvedColorScheme();
+  const { hydrated } = usePreferences();
   const isDark = scheme === 'dark';
   const colors = Colors[isDark ? 'dark' : 'light'];
   const baseTheme = isDark ? DarkTheme : DefaultTheme;
@@ -31,10 +41,19 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
+    if (!hydrated) {
+      // Do not hold the splash screen indefinitely if storage is slow.
+      const fallback = setTimeout(() => {
+        SplashScreen.hideAsync().catch(() => {});
+      }, 1500);
+
+      return () => clearTimeout(fallback);
+    }
+
     SplashScreen.hideAsync().catch(() => {
       // The native splash screen is not available on web.
     });
-  }, []);
+  }, [hydrated]);
 
   return (
     <ThemeProvider value={navigationTheme}>
