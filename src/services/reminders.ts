@@ -1,5 +1,15 @@
-import * as Notifications from 'expo-notifications';
-import { AndroidImportance, IosAuthorizationStatus } from 'expo-notifications';
+import {
+  AndroidImportance,
+  IosAuthorizationStatus,
+  SchedulableTriggerInputTypes,
+  cancelScheduledNotificationAsync,
+  getPermissionsAsync,
+  requestPermissionsAsync,
+  scheduleNotificationAsync,
+  setNotificationChannelAsync,
+  setNotificationHandler,
+  type NotificationPermissionsStatus,
+} from '@/services/notifications';
 import { Linking, Platform } from 'react-native';
 
 export type ReminderPermission = 'granted' | 'denied' | 'unsupported' | 'error';
@@ -33,18 +43,27 @@ async function ensureChannel(): Promise<void> {
     return;
   }
 
-  await Notifications.setNotificationChannelAsync(ReminderChannelId, {
-    name: 'दैनिक स्मरण',
-    description: 'भक्ति दैनिक का वैकल्पिक दैनिक रिमाइंडर',
-    importance: AndroidImportance.DEFAULT,
-    sound: null,
-    enableVibrate: false,
-    showBadge: false,
-  });
+  try {
+    await setNotificationChannelAsync(ReminderChannelId, {
+      name: 'दैनिक स्मरण',
+      description: 'भक्ति दैनिक का वैकल्पिक दैनिक रिमाइंडर',
+      // `expo-notifications` 58.1.6 cannot convert a null `sound` value to a
+      // native Bundle; a low-importance channel is silent without one.
+      importance: AndroidImportance.LOW,
+      enableVibrate: false,
+      showBadge: false,
+    });
+  } catch (error) {
+    // Expo Go 58.0.5 rejects channel creation on Android 14. Scheduling still
+    // works through Expo's silent fallback channel, so a channel failure must
+    // not block an explicitly enabled reminder. A development/release build
+    // can use the configured channel above when the native module supports it.
+    console.warn('[reminders] could not create the reminder channel', error);
+  }
 }
 
 function interpretPermission(
-  permissions: Notifications.NotificationPermissionsStatus
+  permissions: NotificationPermissionsStatus
 ): ReminderPermission {
   if (permissions.granted) {
     return 'granted';
@@ -62,7 +81,7 @@ function interpretPermission(
  */
 export async function getReminderPermission(): Promise<ReminderPermission> {
   try {
-    return interpretPermission(await Notifications.getPermissionsAsync());
+    return interpretPermission(await getPermissionsAsync());
   } catch {
     return 'error';
   }
@@ -75,7 +94,7 @@ export async function requestReminderPermission(): Promise<ReminderPermission> {
   try {
     await ensureChannel();
 
-    const current = await Notifications.getPermissionsAsync();
+    const current = await getPermissionsAsync();
     if (interpretPermission(current) === 'granted') {
       return 'granted';
     }
@@ -84,7 +103,7 @@ export async function requestReminderPermission(): Promise<ReminderPermission> {
       return 'denied';
     }
 
-    return interpretPermission(await Notifications.requestPermissionsAsync());
+    return interpretPermission(await requestPermissionsAsync());
   } catch {
     return 'error';
   }
@@ -96,9 +115,7 @@ async function scheduleInternal(hour: number, minute: number): Promise<ReminderS
     // reminder in the system queue. Cancel before checking permission too, so a
     // revoked permission cannot leave an old reminder scheduled at a stale
     // time. A missing identifier is not an error.
-    await Notifications.cancelScheduledNotificationAsync(ReminderNotificationId).catch(
-      () => undefined
-    );
+    await cancelScheduledNotificationAsync(ReminderNotificationId).catch(() => undefined);
 
     const permission = await getReminderPermission();
     if (permission !== 'granted') {
@@ -107,11 +124,11 @@ async function scheduleInternal(hour: number, minute: number): Promise<ReminderS
 
     await ensureChannel();
 
-    await Notifications.scheduleNotificationAsync({
+    await scheduleNotificationAsync({
       identifier: ReminderNotificationId,
       content: { ...reminderContent },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        type: SchedulableTriggerInputTypes.DAILY,
         hour,
         minute,
         channelId: ReminderChannelId,
@@ -138,7 +155,7 @@ export function scheduleDailyReminder(
 export function cancelDailyReminder(): Promise<boolean> {
   return enqueue(async () => {
     try {
-      await Notifications.cancelScheduledNotificationAsync(ReminderNotificationId);
+      await cancelScheduledNotificationAsync(ReminderNotificationId);
       return true;
     } catch {
       return false;
@@ -161,7 +178,7 @@ export async function openReminderSettings(): Promise<boolean> {
  */
 export function configureNotificationHandler(): void {
   try {
-    Notifications.setNotificationHandler({
+    setNotificationHandler({
       handleNotification: async () => ({
         shouldShowBanner: true,
         shouldShowList: true,

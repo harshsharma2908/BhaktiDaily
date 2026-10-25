@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { PermissionStatus } from 'expo-modules-core';
-import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
+import * as Notifications from '@/services/notifications';
 
 import {
   ReminderNotificationId,
@@ -9,20 +10,21 @@ import {
   scheduleDailyReminder,
 } from '@/services/reminders';
 
-jest.mock('expo-notifications', () => ({
+jest.mock('@/services/notifications', () => ({
   getPermissionsAsync: jest.fn(),
   requestPermissionsAsync: jest.fn(),
   setNotificationChannelAsync: jest.fn(),
   cancelScheduledNotificationAsync: jest.fn(),
   scheduleNotificationAsync: jest.fn(),
   setNotificationHandler: jest.fn(),
-  AndroidImportance: { DEFAULT: 5 },
+  AndroidImportance: { DEFAULT: 5, LOW: 4 },
   IosAuthorizationStatus: { PROVISIONAL: 3 },
   SchedulableTriggerInputTypes: { DAILY: 'daily' },
 }));
 
 const getPermissions = jest.mocked(Notifications.getPermissionsAsync);
 const requestPermissions = jest.mocked(Notifications.requestPermissionsAsync);
+const setChannel = jest.mocked(Notifications.setNotificationChannelAsync);
 const cancelScheduled = jest.mocked(Notifications.cancelScheduledNotificationAsync);
 const scheduleNotification = jest.mocked(Notifications.scheduleNotificationAsync);
 
@@ -43,6 +45,7 @@ describe('local reminders', () => {
     jest.clearAllMocks();
     getPermissions.mockResolvedValue(permissionStatus());
     requestPermissions.mockResolvedValue(permissionStatus());
+    setChannel.mockResolvedValue(null);
     cancelScheduled.mockResolvedValue(undefined);
     scheduleNotification.mockResolvedValue('scheduled-id');
   });
@@ -67,6 +70,50 @@ describe('local reminders', () => {
         }),
       })
     );
+  });
+
+  it('creates a silent channel without a null sound value', async () => {
+    getPermissions.mockResolvedValue(
+      permissionStatus({ granted: true, status: PermissionStatus.GRANTED })
+    );
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
+
+    try {
+      await scheduleDailyReminder(7, 30);
+
+      expect(setChannel).toHaveBeenCalledWith(
+        'daily-reminder',
+        expect.objectContaining({
+          importance: 4,
+          enableVibrate: false,
+          showBadge: false,
+        })
+      );
+      expect(setChannel.mock.calls[0][1]).not.toHaveProperty('sound');
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+    }
+  });
+
+  it('still schedules when channel creation is unavailable', async () => {
+    getPermissions.mockResolvedValue(
+      permissionStatus({ granted: true, status: PermissionStatus.GRANTED })
+    );
+    setChannel.mockRejectedValue(new Error('channel unavailable'));
+    const originalOS = Platform.OS;
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
+
+    try {
+      const result = await scheduleDailyReminder(7, 30);
+
+      expect(result).toEqual({ ok: true });
+      expect(scheduleNotification).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+      warn.mockRestore();
+    }
   });
 
   it('cancels the old reminder and does not schedule when permission is missing', async () => {
