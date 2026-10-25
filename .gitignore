@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# local knowledge graph (do not commit - keep machine-local)
+graphify-out/

@@ -66,8 +66,9 @@ export default function AboutScreen() {
 
         <Card>
           <ThemedText type="body" themeColor="textSecondary">
-            भक्ति दैनिक एक Android-first, हिन्दी-first दैनिक साथी है। इसका उद्देश्य शांत पठन,
-            स्पष्ट पूजा मार्गदर्शन और अपनी गति से जाप के लिए एक भरोसेमंद जगह बनाना है।
+            भक्ति दैनिक एक सरल दैनिक साथी ऐप है, जिसे पहले Android और हिन्दी भाषा के लिए बनाया गया
+            है। इसका उद्देश्य शांत चिंतन, स्पष्ट पूजा मार्गदर्शन और अपनी गति से जाप के लिए एक
+            भरोसेमंद जगह बनाना है।
           </ThemedText>
           <ThemedText type="body" themeColor="textSecondary" style={styles.paragraph}>
             अभी ऐप निर्माणाधीन है। जाप प्रगति, दिखावट और वैकल्पिक रिमाइंडर इस डिवाइस पर स्थानीय

@@ -133,3 +133,18 @@ These must be answered by the product owner or a named reviewer before real cont
 - Which sources have permission for text reproduction, and under what terms?
 - How should regional or lineage variations be displayed when more than one practice is valid?
 - What is the correction and withdrawal process if a published source is found to be wrong?
+
+## Day 6 additions — unresolved editorial decisions (draft pack)
+
+The Day 6 draft pack in [`content-drafts/day6-initial-content.md`](./content-drafts/day6-initial-content.md)
+introduces original app-authored devotional prose. It stays outside the app until the following
+decisions, each mapped to one of the five register distinctions, are made by the owner. None of
+these may be guessed.
+
+| # | Decision needed | Register distinction | Status |
+| --- | --- | --- | --- |
+| D1 | Are app-authored (non-scriptural) daily reflections an approved content type at all, and if so under which label besides `reviewed`? | Source verification — an app-authored text has no scripture source; its "source" must be defined (e.g. internal editorial authorship) before any status above `sample`. | Open, needs owner |
+| D2 | Who reviews the draft reflections and the general prayer-routine draft, and does the reviewer need the same qualifications as a panchang reviewer, or a separate editorial-reviewer role? | Editorial review. | Open, needs owner |
+| D3 | No reproduction rights question arises for original prose, **but** if a draft ever quotes any external text, the source must be registered with its reproduction rights first. | Reproduction rights or permission. | Standing rule |
+| D4 | The seven reflections are written to be region-neutral; the prayer-routine draft explicitly defers to household tradition. Owner must confirm that region-neutral wording is acceptable for the targeted (North India-first) audience, or state the variation the app should show. | Regional and tradition-specific variation. | Open, needs owner |
+| D5 | Final approval for publication of any draft line — including the final Hindi wording — must be given by the product owner; the app copies nothing from the draft file silently. | Final approval for publication. | Open, needs owner |

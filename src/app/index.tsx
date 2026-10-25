@@ -16,7 +16,7 @@ import { AppInfo, ContentPolicy } from '@/constants/app';
 import { IconSize, Spacing } from '@/constants/theme';
 import { describeContentProvenance } from '@/content/presentation';
 import type { CalendarObservance } from '@/content/types';
-import { getUpcomingSampleObservances } from '@/data/calendar';
+import { getUpcomingVerifiedObservances } from '@/data/calendar';
 import { HomeContent } from '@/data/home';
 import { useTheme } from '@/hooks/use-theme';
 import { formatHindiDate, getHindiGreeting } from '@/lib/date';
@@ -25,7 +25,9 @@ export default function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const now = useMemo(() => new Date(), []);
-  const upcoming = useMemo(() => getUpcomingSampleObservances(now, 1), [now]);
+  // Home shows the next REVIEWED observance only; generated sample dates never
+  // appear here (the verified feed cannot contain them by construction).
+  const upcoming = useMemo(() => getUpcomingVerifiedObservances(now, 1), [now]);
   const nextObservance = upcoming[0];
 
   return (
@@ -84,12 +86,12 @@ export default function HomeScreen() {
 
         <View style={styles.inlineStatus}>
           <SymbolView
-            name={{ ios: 'checkmark.shield', android: 'verified', web: 'verified' }}
+            name={{ ios: 'clock', android: 'schedule', web: 'schedule' }}
             size={IconSize.sm}
-            tintColor={theme.success}
+            tintColor={theme.textSecondary}
           />
           <ThemedText type="caption" themeColor="textSecondary" style={styles.sourceText}>
-            केवल सत्यापित स्रोत के साथ प्रकाशित होगी
+            समीक्षा के बाद सत्यापित स्रोत सहित प्रकाशित होगी
           </ThemedText>
         </View>
       </Card>
@@ -114,20 +116,20 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="अभी शुरू करें" hint="दो सरल कदम" />
+        <SectionHeader title="अभी शुरू करें" hint="रोज़ के दो सरल कदम" />
 
         <View style={styles.quickRow}>
-          <QuickAction
-            href="/puja"
-            icon={{ ios: 'flame.fill', android: 'temple_hindu', web: 'temple_hindu' }}
-            title="पूजा गाइड"
-            description="सामग्री और चरण"
-          />
           <QuickAction
             href="/jaap"
             icon={{ ios: 'repeat', android: 'repeat', web: 'repeat' }}
             title="जाप"
             description="अपनी गति से स्मरण"
+          />
+          <QuickAction
+            href="/puja"
+            icon={{ ios: 'flame.fill', android: 'temple_hindu', web: 'temple_hindu' }}
+            title="पूजा गाइड"
+            description="सामग्री और चरण"
           />
         </View>
       </View>
@@ -149,24 +151,15 @@ function renderUpcomingContent(observance: CalendarObservance | undefined) {
   if (!observance) {
     return (
       <View style={styles.emptyUpcoming}>
-        <ThemedText type="bodyStrong">कोई सत्यापित अवसर नहीं</ThemedText>
+        <ThemedText type="bodyStrong">अभी कोई सत्यापित अवसर नहीं</ThemedText>
         <ThemedText type="caption" themeColor="textSecondary">
-          सत्यापित तिथि मिलते ही यहाँ दिखाई देगी।
+          समीक्षित तिथि उपलब्ध होने पर यहाँ दिखाई देगी। कैलेंडर में अभी केवल चिह्नित नमूना प्रविष्टियाँ हैं।
         </ThemedText>
       </View>
     );
   }
 
-  return (
-    <>
-      <ObservanceRow observance={observance} showDivider={false} />
-      <Notice
-        tone="sample"
-        title="नमूना प्रविष्टि"
-        description="यह तिथि केवल UI परीक्षण के लिए है। वास्तविक पर्व तिथि सत्यापन के बाद ही जोड़ी जाएगी।"
-      />
-    </>
-  );
+  return <ObservanceRow observance={observance} showDivider={false} />;
 }
 
 const styles = StyleSheet.create({

@@ -45,12 +45,21 @@ export function getSampleObservancesForMonth(
   });
 }
 
-/** The nearest sample rows, used by the Home and Calendar upcoming lists. */
-export function getUpcomingSampleObservances(
-  from = new Date(),
-  count = 3
+function dayStart(from: Date) {
+  return new Date(from.getFullYear(), from.getMonth(), from.getDate());
+}
+
+/**
+ * Nearest upcoming observances from the generated UI samples, scanned over a
+ * three-month window. The optional filter lets callers restrict the feed —
+ * for example to reviewed entries only — without touching the generation code.
+ */
+export function getUpcomingObservances(
+  from: Date = new Date(),
+  count = 3,
+  filter: (entry: CalendarObservance) => boolean = () => true
 ): CalendarObservance[] {
-  const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const start = dayStart(from);
 
   const rows = [0, 1, 2].flatMap((offset) => {
     const monthStart = new Date(start.getFullYear(), start.getMonth() + offset, 1);
@@ -58,7 +67,30 @@ export function getUpcomingSampleObservances(
   });
 
   return rows
-    .filter((row) => parseDateKey(row.date).getTime() >= start.getTime())
+    .filter(
+      (row) =>
+        filter(row) && parseDateKey(row.date).getTime() >= start.getTime()
+    )
     .sort((left, right) => parseDateKey(left.date).getTime() - parseDateKey(right.date).getTime())
     .slice(0, count);
+}
+
+/** The nearest sample rows, used by the Calendar upcoming list. */
+export function getUpcomingSampleObservances(
+  from: Date = new Date(),
+  count = 3
+): CalendarObservance[] {
+  return getUpcomingObservances(from, count);
+}
+
+/**
+ * Verified entries only. Sample rows are never promoted into this feed, so a
+ * surface that asks for verified data (such as Home) never shows a generated
+ * UI date as if it were a real observance.
+ */
+export function getUpcomingVerifiedObservances(
+  from: Date = new Date(),
+  count = 3
+): CalendarObservance[] {
+  return getUpcomingObservances(from, count, (entry) => entry.reviewStatus === 'reviewed');
 }

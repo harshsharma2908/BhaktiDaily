@@ -170,7 +170,7 @@ export default function CalendarScreen() {
 
       <Notice
         title="तिथियाँ कैसे जोड़ी जाएँगी"
-        description="हर वास्तविक प्रविष्टि प्रामाणिक पंचांग स्रोत, समीक्षक और अंतिम जाँच की तारीख के साथ जोड़ी जाएगी।"
+        description="हर वास्तविक प्रविष्टि के साथ प्रामाणिक पंचांग स्रोत, समीक्षक, क्षेत्र और कैलेंडर परंपरा, तथा अंतिम जाँच की तारीख दर्ज की जाएगी। स्थान-विशेष तिथि को सार्वभौमिक नहीं दिखाया जाएगा।"
       />
 
       <ThemedText type="caption" themeColor="textSecondary" style={styles.footer}>
@@ -206,13 +206,18 @@ function MonthButton({ icon, label, onPress }: MonthButtonProps) {
   );
 }
 
+// The seven-column grid keeps enough room for touch: on a 320dp screen this
+// padding makes each day slot ≈39dp wide, and the grid widens the day
+// button's hit area so every date still reaches a 44dp target.
+const CALENDAR_CARD_PADDING = Spacing.sm;
+
 const styles = StyleSheet.create({
   calendarCard: {
     alignSelf: 'center',
     width: '100%',
     maxWidth: Layout.calendarMaxWidth,
     gap: Spacing.lg,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: CALENDAR_CARD_PADDING,
   },
   monthNav: {
     flexDirection: 'row',

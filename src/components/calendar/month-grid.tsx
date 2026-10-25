@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing, TouchTarget } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getMonthCells, WEEKDAY_LABELS } from '@/lib/calendar';
 import { formatHindiFullDate, isSameDay, toDateKey } from '@/lib/date';
@@ -56,7 +56,11 @@ export function MonthGrid({ year, month, selectedDate, eventDates, onSelectDate 
                 accessibilityLabel={`${formatHindiFullDate(cell.date)}${stateLabel ? `, ${stateLabel}` : ''}`}
                 accessibilityState={{ selected: isSelected }}
                 android_ripple={{ color: theme.accentSoft, borderless: true }}
-                hitSlop={{ top: 0, bottom: 0, left: 2, right: 2 }}
+                // Widening the touch area without changing the layout: at the
+                // narrowest supported width (320dp) the day slot is ≈39dp, so
+                // ±3dp on each side keeps every date above the 44dp target.
+                // Screens ≥360dp already reach 44dp on the slot itself.
+                hitSlop={{ top: 0, bottom: 0, left: 3, right: 3 }}
                 onPress={() => onSelectDate(cell.date)}
                 style={({ pressed }) => [
                   styles.day,
@@ -110,7 +114,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   day: {
-    height: 46,
+    alignSelf: 'stretch',
+    minHeight: TouchTarget.min,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.sm + 2,

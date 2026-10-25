@@ -9,9 +9,8 @@ import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { InfoRow } from '@/components/ui/info-row';
 import { Notice } from '@/components/ui/notice';
-import { Pill } from '@/components/ui/pill';
 import { Screen, SectionHeader } from '@/components/ui/screen';
-import { AppInfo } from '@/constants/app';
+import { AppInfo, LanguagePolicy } from '@/constants/app';
 import { IconSize, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { usePreferences } from '@/providers/preferences-provider';
@@ -80,22 +79,25 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="भाषा" hint="जल्द उपलब्ध" />
+        <SectionHeader title="भाषा" hint="इस संस्करण में हिन्दी" />
 
         <Card>
-          <InfoRow
-            icon={{ ios: 'translate', android: 'translate', web: 'translate' }}
-            title="भाषा"
-            description="फ़िलहाल सभी स्क्रीन हिन्दी में हैं"
-            trailing={<Pill label="जल्द" tone="outline" />}
-            disabled
-          />
+          <View style={styles.languageRow}>
+            <View style={[styles.iconWrap, { backgroundColor: theme.accentSoft }]}>
+              <SymbolView
+                name={{ ios: 'translate', android: 'translate', web: 'translate' }}
+                size={IconSize.md}
+                tintColor={theme.accent}
+              />
+            </View>
+            <View style={styles.copy}>
+              <ThemedText type="bodyStrong">हिन्दी-प्राथमिक</ThemedText>
+              <ThemedText type="caption" themeColor="textSecondary">
+                {LanguagePolicy.hindiFirst}
+              </ThemedText>
+            </View>
+          </View>
         </Card>
-
-        <Notice
-          title="अंग्रेज़ी चुनना अभी उपलब्ध नहीं"
-          description="पूरा अनुवाद तैयार होने तक भाषा बदलने का विकल्प बंद है। अधूरा अनुवाद दिखाने के बजाय केवल हिन्दी रखी गई है।"
-        />
       </View>
 
       {saveError ? (
@@ -161,10 +163,19 @@ const styles = StyleSheet.create({
   appearanceCard: {
     gap: Spacing.lg,
   },
+  languageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
   appearanceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+  },
+  copy: {
+    flex: 1,
+    gap: Spacing.xxs,
   },
   iconWrap: {
     width: 38,
@@ -172,10 +183,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  copy: {
-    flex: 1,
-    gap: Spacing.xxs,
   },
   chipRow: {
     flexDirection: 'row',

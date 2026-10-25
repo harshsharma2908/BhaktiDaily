@@ -81,7 +81,7 @@ export default function PujaGuideDetailScreen() {
       <Card tone="muted" style={styles.metaCard}>
         <View style={styles.metaItem}>
           <ThemedText type="caption" themeColor="textSecondary">
-            अनुमानित समय
+            {guide.reviewStatus === 'reviewed' ? 'अनुमानित समय' : 'अनुमानित समय (नमूना)'}
           </ThemedText>
           <ThemedText type="bodyStrong">{guide.duration}</ThemedText>
         </View>
